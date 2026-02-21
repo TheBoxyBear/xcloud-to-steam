@@ -102,7 +102,7 @@ public record class SteamShortcut
 					shortcut.AppName = GetString(entry.Value) ?? ThrowInvalidDataException<string>(key);
 					break;
 				case "exe":
-					shortcut.AppName = GetString(entry.Value) ?? ThrowInvalidDataException<string>(key);
+					shortcut.Exe = GetString(entry.Value) ?? ThrowInvalidDataException<string>(key);
 					break;
 				case "appid":
 					shortcut.AppId = GetId(entry.Value) ?? ThrowInvalidDataException<SteamId>(key);
