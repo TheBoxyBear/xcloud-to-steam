@@ -35,7 +35,7 @@
 					IsEnabled="{Binding $parent[ListBox].((vm:MainViewModel)DataContext).CanSelect}"
 					Width="200" Height="150" Margin="10" Padding="10">
 					<StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" ToolTip.Tip="{Binding Details.ProductTitle}">
-						<TextBlock Text="{Binding Details.ProductTitle}" TextTrimming="CharacterEllipsis" FontSize="16" FontWeight="Bold" TextAlignment="Center"/>
+						<TextBlock Text="{Binding Details.ProductTitle}" TextWrapping="Wrap" MaxLines="2" TextTrimming="CharacterEllipsis" FontSize="16" FontWeight="Bold" TextAlignment="Center"/>
 						<TextBlock Text="{Binding SelectionState}" FontSize="12" TextAlignment="Center" Margin="0,5,0,0"/>
 					</StackPanel>
 					<Button.ContextMenu>
