@@ -66,13 +66,6 @@ public partial class MainViewModel : ViewModelBase
 
 	public async Task LoadCatalog()
 	{
-		string[] ids = await xCloudApi.GetCatalog().ToArrayAsync();
-
-		if (ids.Contains("BP5HKF86C1NJ"))
-		{
-
-		}
-
 		Task<ProductDetails[]> getCatalogTask =
 			xCloudApi.GetCatalog().ToArrayAsync().AsTask()
 			.ContinueWith(task => xCloudApi.GetDetails(task.Result).ToArrayAsync().AsTask())
