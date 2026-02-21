@@ -1,4 +1,5 @@
-﻿using System.Runtime.CompilerServices;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 using System.Text;
 
 using ValveKeyValue;
@@ -9,9 +10,7 @@ namespace xCloudToSteam.Steam.Model;
 
 public record class SteamShortcut
 {
-	private bool
-		m_appNameLowercase,
-		m_exeLowercase;
+	private readonly List<string> m_keys = [];
 
 	public SteamId AppId { get; set; }
 	public string AppName { get; set; } = string.Empty;
@@ -91,87 +90,162 @@ public record class SteamShortcut
 
 	private static SteamShortcut Deserialize(KVObject dict)
 	{
-		SteamShortcut shortcut = new()
+		SteamShortcut shortcut = new();
+
+		foreach (KVObject entry in dict)
 		{
-			AppName				= GetString(dict, "AppName"),
-			Exe					= GetString(dict, "Exe"),
-			AppId               = GetId(dict, "appid"),
-			StartDir            = GetString(dict, "StartDir"),
-			Icon                = GetString(dict, "icon"),
-			ShortcutPath        = GetString(dict, "ShortcutPath"),
-			LaunchOptions       = GetString(dict, "LaunchOptions"),
-			IsHidden            = GetBool(dict, "IsHidden"),
-			AllowDesktopConfig  = GetBool(dict, "AllowDesktopConfig"),
-			AllowOverlay        = GetBool(dict, "AllowOverlay"),
-			OpenVR              = GetBool(dict, "OpenVR"),
-			Devkit              = GetBool(dict, "Devkit"),
-			DevkitGameID        = GetString(dict, "DevkitGameID"),
-			DevkitOverrideAppID = GetId(dict, "DevkitOverrideAppID"),
-			LastPlayTime        = GetDateTime(dict, "LastPlayTime"),
-			FlatpakAppID        = GetString(dict, "FlatpakAppID"),
-			SortAs              = GetString(dict, "sortas")
-		};
+			string key = entry.Name;
 
-		// Steam Rom Manager uses `appname` and `exe` instead of `AppName` and `Exe`. Both are supported by Steam, but reading the wrong key will lose the app name
-		// Issue reported to Steam Rom Manager: https://github.com/SteamGridDB/steam-rom-manager/issues/793
-		if (shortcut.AppName == string.Empty)
-		{
-			shortcut.m_appNameLowercase = true;
-			shortcut.AppName = GetString(dict, "appname");
-		}
-		if (shortcut.Exe == string.Empty)
-		{
-			shortcut.m_exeLowercase = true;
-			shortcut.Exe = GetString(dict, "exe");
-		}
+			switch (key.ToLower())
+			{
+				case "appname":
+					shortcut.AppName = GetString(entry.Value) ?? ThrowInvalidDataException<string>(key);
+					break;
+				case "exe":
+					shortcut.AppName = GetString(entry.Value) ?? ThrowInvalidDataException<string>(key);
+					break;
+				case "appid":
+					shortcut.AppId = GetId(entry.Value) ?? ThrowInvalidDataException<SteamId>(key);
+					break;
+				case "startdir":
+					shortcut.StartDir = GetString(entry.Value) ?? ThrowInvalidDataException<string>(key);
+					break;
+				case "icon":
+					shortcut.Icon = GetString(entry.Value) ?? ThrowInvalidDataException<string>(key);
+					break;
+				case "shortcutpath":
+					shortcut.ShortcutPath = GetString(entry.Value) ?? ThrowInvalidDataException<string>(key);
+					break;
+				case "launchoptions":
+					shortcut.LaunchOptions = GetString(entry.Value) ?? ThrowInvalidDataException<string>(key);
+					break;
+				case "ishidden":
+					shortcut.IsHidden = GetBool(entry.Value) ?? ThrowInvalidDataException<bool>(key);
+					break;
+				case "allowdesktopconfig":
+					shortcut.AllowDesktopConfig = GetBool(entry.Value) ?? ThrowInvalidDataException<bool>(key);
+					break;
+				case "allowoverlay":
+					shortcut.AllowOverlay = GetBool(entry.Value) ?? ThrowInvalidDataException<bool>(key);
+					break;
+				case "openvr":
+					shortcut.OpenVR = GetBool(entry.Value) ?? ThrowInvalidDataException<bool>(key);
+					break;
+				case "devkit":
+					shortcut.Devkit = GetBool(entry.Value) ?? ThrowInvalidDataException<bool>(key);
+					break;
+				case "devkitgameid":
+					shortcut.DevkitGameID = GetString(entry.Value) ?? ThrowInvalidDataException<string>(key);
+					break;
+				case "devkitoverrideappid":
+					shortcut.DevkitOverrideAppID = GetId(entry.Value) ?? ThrowInvalidDataException<SteamId>(key);
+					break;
+				case "lastplaytime":
+					shortcut.LastPlayTime = GetDateTime(entry.Value) ?? ThrowInvalidDataException<DateTime>(key);
+					break;
+				case "flatpakappid":
+					shortcut.FlatpakAppID = GetString(entry.Value) ?? ThrowInvalidDataException<string>(key);
+					break;
+				case "sortas":
+					shortcut.SortAs = GetString(entry.Value) ?? ThrowInvalidDataException<string>(key);
+					break;
+				case "tags":
+					if (entry.Value.ValueType != KVValueType.Collection)
+						throw new InvalidDataException("Expected tags to be an array");
 
-		KVValue? tagsValue = dict["tags"];
+					foreach (KVObject tag in entry)
+					{
+						if (tag.Value.ValueType != KVValueType.String)
+							ThrowInvalidDataException<string[]>(key);
 
-		if (tagsValue is null)
-			throw new InvalidDataException("Missing entry `tags`");
+						shortcut.Tags.Add((string)tag.Value);
+					}
+					break;
+				default:
+					continue;
+			}
 
-		if (tagsValue?.ValueType != KVValueType.Collection)
-			throw new InvalidDataException("Expected tags to be an array");
-
-		foreach (KVObject tag in (IEnumerable<KVObject>)tagsValue)
-		{
-			if (tag.Value.ValueType != KVValueType.String)
-				throw new Exception("Expected tags to be an array of strings");
-
-			shortcut.Tags.Add((string)tag.Value);
+			shortcut.m_keys.Add(key);
 		}
 
 		return shortcut;
+
+		[DoesNotReturn]
+		static T ThrowInvalidDataException<T>(string key)
+			=> throw new InvalidDataException($"Expected {key} to be of type {typeof(T).Name}.");
 	}
 
 	private static KVObject Serialize(SteamShortcut shortcut, int index)
 	{
-		KVObject[] tags = new KVObject[shortcut.Tags.Count];
+		KVObject[] dict = new KVObject[shortcut.m_keys.Count];
 
-		for (int i = 0; i < shortcut.Tags.Count; i++)
-			tags[i] = new(i.ToString(), shortcut.Tags[i]);
+		for (int i = 0; i < shortcut.m_keys.Count; i++)
+		{
+			string key = shortcut.m_keys[i];
 
-		KVObject[] dict =
-		[
-			new("AppName", shortcut.AppName),
-			new("appid", (int)shortcut.AppId),
-			new("Exe", shortcut.Exe),
-			new("StartDir", shortcut.StartDir),
-			new("Icon", shortcut.Icon),
-			new("ShortcutPath", shortcut.ShortcutPath),
-			new("LaunchOptions", shortcut.LaunchOptions),
-			new("IsHidden", shortcut.IsHidden),
-			new("AllowDesktopConfig", shortcut.AllowDesktopConfig),
-			new("AllowOverlay", shortcut.AllowOverlay),
-			new("OpenVR", shortcut.OpenVR),
-			new("Devkit", shortcut.Devkit),
-			new("DevkitGameID", shortcut.DevkitGameID),
-			new("DevkitOverrideAppID", (int)shortcut.DevkitOverrideAppID),
-			new("LastPlayTime", (int)new DateTimeOffset(shortcut.LastPlayTime).ToUnixTimeSeconds()),
-			new("FlatpakAppID", shortcut.FlatpakAppID),
-			new("sortas", shortcut.SortAs),
-			new("tags", tags)
-		];
+			switch (key.ToLower())
+			{
+				case "appname":
+					dict[i] = new(key, shortcut.AppName);
+					break;
+				case "exe":
+					dict[i] = new(key, shortcut.Exe);
+					break;
+				case "appid":
+					dict[i] = new(key, (int)shortcut.AppId);
+					break;
+				case "startdir":
+					dict[i] = new(key, shortcut.StartDir);
+					break;
+				case "icon":
+					dict[i] = new(key, shortcut.Icon);
+					break;
+				case "shortcutpath":
+					dict[i] = new(key, shortcut.ShortcutPath);
+					break;
+				case "launchoptions":
+					dict[i] = new(key, shortcut.LaunchOptions);
+					break;
+				case "ishidden":
+					dict[i] = new(key, shortcut.IsHidden);
+					break;
+				case "allowdesktopconfig":
+					dict[i] = new(key, shortcut.AllowDesktopConfig);
+					break;
+				case "allowoverlay":
+					dict[i] = new(key, shortcut.AllowOverlay);
+					break;
+				case "openvr":
+					dict[i] = new(key, shortcut.OpenVR);
+					break;
+				case "devkit":
+					dict[i] = new(key, shortcut.Devkit);
+					break;
+				case "devkitgameid":
+					dict[i] = new(key, shortcut.DevkitGameID);
+					break;
+				case "devkitoverrideappid":
+					dict[i] = new(key, (int)shortcut.DevkitOverrideAppID);
+					break;
+				case "lastplaytime":
+					dict[i] = new(key, (int)new DateTimeOffset(shortcut.LastPlayTime).ToUnixTimeSeconds());
+					break;
+				case "flatpakappid":
+					dict[i] = new(key, shortcut.FlatpakAppID);
+					break;
+				case "sortas":
+					dict[i] = new(key, shortcut.SortAs);
+					break;
+				case "tags":
+					KVObject[] tags = new KVObject[shortcut.Tags.Count];
+
+					for (int tagIndex = 0; tagIndex < shortcut.Tags.Count; tagIndex++)
+						tags[tagIndex] = new(tagIndex.ToString(), shortcut.Tags[tagIndex]);
+
+					dict[i] = new(key, tags);
+					break;
+			}
+		}
 
 		return new(index.ToString(), dict);
 	}
