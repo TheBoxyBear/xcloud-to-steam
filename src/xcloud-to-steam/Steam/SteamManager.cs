@@ -58,7 +58,7 @@ public static class SteamManager
 				// See https://developer.valvesoftware.com/wiki/SteamID
 				AccountId    = (uint)(steamId & uint.MaxValue),
 				AccountName  = GetString(entry["AccountName"]),
-				PersonaName  = GetString(entry["PersonalName"]),
+				PersonaName  = GetString(entry["PersonaName"]),
 				MostRecent   = GetInt(entry["MostRecent"])! == 1
 			};
 		}
