@@ -1,0 +1,21 @@
+{
+  "Profiles": {
+    "Windows": {
+      "Edge": {
+        "AppName": "{title} (xCloud)",
+        "Exe": "\"C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe\"",
+        "WorkingDir": "C:/Program Files (x86)/Microsoft/Edge/Application",
+        "Args": "--kiosk play.xbox.com/stream/{storeId}"
+      }
+    },
+    "MacOS": {},
+    "Linux": {
+      "Edge scripts": {
+        "AppName": "{title} (xCloud)",
+        "Exe": "\"{home}/kiosk.sh\"",
+        "WorkingDir": "{home}/",
+        "Args": "play.xbox.com/{storeId}"
+      }
+    }
+  }
+}

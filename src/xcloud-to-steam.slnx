@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="xcloud-to-steam.app/xcloud-to-steam.app.csproj" Id="6210fc9f-4f23-4563-a55e-e35989d29f38" />
+  <Project Path="xcloud-to-steam/xcloud-to-steam.csproj" Id="64fcd4e6-1f18-4de5-b606-a70ca50ccfff" />
+</Solution>

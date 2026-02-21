@@ -1,0 +1,63 @@
+<Window xmlns="https://github.com/avaloniaui"
+		xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+		xmlns:vm="using:xCloudToSteam.App.ViewModels"
+		xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+		xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+		xmlns:models="using:xCloudToSteam.App.Models"
+		mc:Ignorable="d" d:DesignWidth="750" d:DesignHeight="680"
+		x:Class="xCloudToSteam.App.Views.MainView"
+		x:DataType="vm:MainViewModel"
+		Width="750" Height="680"
+		Icon="/Assets/avalonia-logo.ico"
+		Title="xCloud To Steam">
+
+	<Design.DataContext>
+		<vm:MainViewModel/>
+	</Design.DataContext>
+
+	<Grid>
+		<Grid.RowDefinitions>
+			<RowDefinition Height="*"/>
+			<RowDefinition Height="100"/>
+		</Grid.RowDefinitions>
+		<ListBox ItemsSource="{Binding ProductSelections}" Grid.Row="0">
+		<ListBox.ItemsPanel>
+			<ItemsPanelTemplate>
+				<WrapPanel/>
+			</ItemsPanelTemplate>
+		</ListBox.ItemsPanel>
+
+		<ListBox.ItemTemplate>
+			<DataTemplate x:DataType="models:ProductSelection">
+				<Button
+					Command="{Binding $parent[ListBox].((vm:MainViewModel)DataContext).Product_OnClick}"
+					CommandParameter="{Binding}"
+					IsEnabled="{Binding $parent[ListBox].((vm:MainViewModel)DataContext).CanSelect}"
+					Width="200" Height="150" Margin="10" Padding="10">
+					<StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" ToolTip.Tip="{Binding Details.ProductTitle}">
+						<TextBlock Text="{Binding Details.ProductTitle}" TextTrimming="CharacterEllipsis" FontSize="16" FontWeight="Bold" TextAlignment="Center"/>
+						<TextBlock Text="{Binding SelectionState}" FontSize="12" TextAlignment="Center" Margin="0,5,0,0"/>
+					</StackPanel>
+					<Button.ContextMenu>
+						<ContextMenu>
+							<MenuItem Header="View xCloud page"
+									  Command="{Binding $parent[ListBox].((vm:MainViewModel)DataContext).ViewDetailsPage}"
+									  CommandParameter="{Binding Details}"/>
+						</ContextMenu>
+					</Button.ContextMenu>
+				</Button>
+			</DataTemplate>
+		</ListBox.ItemTemplate>
+	</ListBox>
+
+		<Button
+			Grid.Row="1" IsEnabled="{Binding CanApply}"
+			Command="{Binding Apply}" CommandParameter="{Binding}"
+			Width="200" Height="100" Margin="10" Padding="10">
+		<StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+			<TextBlock Text="Apply" FontSize="16" FontWeight="Bold" TextAlignment="Center"/>
+			<TextBlock Text="{Binding ApplyStatus}" FontSize="12" TextAlignment="Center" Margin="0,5,0,0"/>
+			</StackPanel>
+		</Button>
+	</Grid>
+</Window>
