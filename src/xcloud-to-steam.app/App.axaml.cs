@@ -2,11 +2,13 @@ using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Data.Core.Plugins;
 using Avalonia.Markup.Xaml;
+using Avalonia.Threading;
 
 using System.Linq;
+using System.Threading.Tasks;
 
-using xCloudToSteam.App.Views;
 using xCloudToSteam.App.ViewModels;
+using xCloudToSteam.App.Views;
 
 namespace xCloudToSteam.App;
 
@@ -15,6 +17,17 @@ public partial class App : Application
 	public override void Initialize()
 	{
 		AvaloniaXamlLoader.Load(this);
+
+		Dispatcher.UIThread.UnhandledException += (_, args) =>
+		{
+			Program.HandleException(args.Exception);
+			//args.Handled = true;
+		};
+		TaskScheduler.UnobservedTaskException += (_, args) =>
+		{
+			Program.HandleException(args.Exception);
+			//args.SetObserved();
+		};
 	}
 
 	public override void OnFrameworkInitializationCompleted()

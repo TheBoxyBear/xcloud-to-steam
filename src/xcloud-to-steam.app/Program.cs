@@ -1,5 +1,8 @@
 ﻿using Avalonia;
 
+using MsBox.Avalonia;
+using MsBox.Avalonia.Enums;
+
 using System;
 
 namespace xCloudToSteam.App;
@@ -10,8 +13,20 @@ internal sealed class Program
 	// SynchronizationContext-reliant code before AppMain is called: things aren't initialized
 	// yet and stuff might break.
 	[STAThread]
-	public static void Main(string[] args) => BuildAvaloniaApp()
-		.StartWithClassicDesktopLifetime(args);
+	public static void Main(string[] args)
+	{
+		try
+		{
+			BuildAvaloniaApp()
+			.StartWithClassicDesktopLifetime(args);
+		}
+		catch (Exception e)
+		{
+			var box = MessageBoxManager.GetMessageBoxStandard("Unhandled exception", e.ToString(), ButtonEnum.Ok);
+			box.ShowAsync().GetAwaiter().GetResult();
+			Environment.Exit(1);
+		}
+	}
 
 	// Avalonia configuration, don't remove; also used by visual designer.
 	public static AppBuilder BuildAvaloniaApp()
@@ -19,4 +34,12 @@ internal sealed class Program
 			.UsePlatformDetect()
 			.WithInterFont()
 			.LogToTrace();
+
+	public static async void HandleException(Exception ex)
+	{
+		var box = MessageBoxManager.GetMessageBoxStandard("Unhandled exception", ex.ToString(), ButtonEnum.Ok);
+		await box.ShowAsync();
+
+		Environment.Exit(1);
+	}
 }

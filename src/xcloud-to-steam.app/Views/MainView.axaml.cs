@@ -38,6 +38,7 @@ public partial class MainView : Window
 			return;
 		}
 
-		await ViewModel.LoadCatalog();
+		try { await ViewModel.LoadCatalog(); }
+		catch (Exception ex) { Program.HandleException(ex); }
 	}
 }
