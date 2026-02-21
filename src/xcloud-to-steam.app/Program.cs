@@ -1,4 +1,5 @@
 ﻿using Avalonia;
+using Avalonia.Threading;
 
 using MsBox.Avalonia;
 using MsBox.Avalonia.Enums;
@@ -37,8 +38,11 @@ internal sealed class Program
 
 	public static async void HandleException(Exception ex)
 	{
-		var box = MessageBoxManager.GetMessageBoxStandard("Unhandled exception", ex.ToString(), ButtonEnum.Ok);
-		await box.ShowAsync();
+		await Dispatcher.UIThread.Invoke(async () =>
+		{
+			var box = MessageBoxManager.GetMessageBoxStandard("Unhandled exception", ex.ToString(), ButtonEnum.Ok);
+			await box.ShowAsync();
+		});
 
 		Environment.Exit(1);
 	}

@@ -3,7 +3,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
-using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
@@ -121,30 +120,60 @@ public partial class MainViewModel : ViewModelBase
 	[RelayCommand]
 	public async Task Apply()
 	{
-		CanApply = false;
+		CanApply  = false;
 		CanSelect = false;
 		ApplyStatus = "Applying...";
 
 		ShortcutConfigProfile profile = m_config.Profiles.GetProfilesForCurrentOS().Values.First();
 
-		Task<SteamShortcut>[] addTasks = [.. m_selectionGroups[ProductSelectionState.ToAdd].Select(s => xCloudShortcutManager.CreateShortcut(m_session, s.Details, profile))];
-		Task[] modifyTasks = [.. m_selectionGroups[ProductSelectionState.Added].Select(s => xCloudShortcutManager.ModifyShortcut(m_session, m_shortcutDict[s.Details.StoreId], s.Details, profile))];
+		LinkedList<ProductSelection>
+			toAddList    = m_selectionGroups[ProductSelectionState.ToAdd],
+			toModifyList = m_selectionGroups[ProductSelectionState.Added],
+			toRemoveList = m_selectionGroups[ProductSelectionState.ToRemove];
 
-		foreach (ProductSelection toRemove in m_selectionGroups[ProductSelectionState.ToRemove])
+		uint
+			completedTasks = 0,
+			totalTasks     = (uint)(toAddList.Count + toModifyList.Count + toRemoveList.Count);
+
+		Task<SteamShortcut>[] addTasks = [.. toAddList.Select(s =>
+			Task.Run(() => xCloudShortcutManager.CreateShortcut(m_session, s.Details, profile))
+				.ContinueWith(t =>
+				{
+					if (t.IsFaulted)
+						Program.HandleException(t.Exception);
+
+					OnTaskComplete();
+					return t.Result;
+				}))];
+
+		Task[] modifyTasks = [.. toModifyList.Select(s =>
+			Task.Run(() => xCloudShortcutManager.ModifyShortcut(m_session, m_shortcutDict[s.Details.StoreId], s.Details, profile)
+				.ContinueWith(t =>
+				{
+					if (t.IsFaulted)
+						Program.HandleException(t.Exception);
+
+					OnTaskComplete();
+				})))];
+
+		foreach (ProductSelection toRemove in toRemoveList)
 		{
 			int removeIndex = m_shortcuts.FindIndex(s => s.IsXCloudShortcut && s.XCloudStoreId == toRemove.Details.StoreId);
 
 			if (removeIndex >= 0)
+			{
 				m_shortcuts.RemoveAt(removeIndex);
+				OnTaskComplete();
+			}
 		}
 
 		await Task.WhenAll(addTasks);
 		m_shortcuts.AddRange(addTasks.Select(t => t.Result));
 
-		foreach (ProductSelection selection in m_selectionGroups[ProductSelectionState.ToAdd].ToArray())
+		foreach (ProductSelection selection in toAddList.ToArray())
 			UpdateSelectionState(selection, ProductSelectionState.Added);
 
-		foreach (ProductSelection selection in m_selectionGroups[ProductSelectionState.ToRemove].ToArray())
+		foreach (ProductSelection selection in toRemoveList.ToArray())
 			UpdateSelectionState(selection, ProductSelectionState.Missing);
 
 		await Task.WhenAll(modifyTasks);
@@ -152,8 +181,16 @@ public partial class MainViewModel : ViewModelBase
 		await SteamShortcut.Write(m_session, m_shortcuts);
 
 		ApplyStatus = "Done!";
-		CanApply = true;
-		CanSelect = true;
+		CanApply    = true;
+		CanSelect   = true;
+
+		void OnTaskComplete()
+		{
+			completedTasks++;
+
+			Dispatcher.UIThread.Post(() => ApplyStatus = $"Applying... ({completedTasks}/{totalTasks})",
+				DispatcherPriority.Background);
+		}
 	}
 
 	[RelayCommand]
