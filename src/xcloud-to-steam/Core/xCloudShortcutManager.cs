@@ -41,12 +41,19 @@ public static partial class xCloudShortcutManager
 			Tags          = [xCloudTag, details.StoreId]
 		};
 
-		string coverPath = SteamManager.GetGridImagePath(session, shortcut.AppId, ImageType.Cover);
-		await DownloadImage(details.ImagePoster, coverPath, cancellationToken);
+		if (details.ImagePoster is not null)
+		{
+			string coverPath = SteamManager.GetGridImagePath(session, shortcut.AppId, ImageType.Cover);
+			await DownloadImage(details.ImagePoster, coverPath, cancellationToken);
+		}
 
 		string heroPath = SteamManager.GetGridImagePath(session, shortcut.AppId, ImageType.Hero);
-		StoreDetails storeDetails = await xCloudApi.GetStoreDetails(details.StoreId);
-		await DownloadImage(storeDetails.ProductSummaries[0].Images.SuperHeroArt, heroPath, cancellationToken);
+		StoreDetails storeDetails = await xCloudApi.GetStoreDetails(details.StoreId, cancellationToken);
+
+		string heroArtUrl = storeDetails.ProductSummaries[0].Images.SuperHeroArt;
+
+		if (heroArtUrl is not null)
+			await DownloadImage(heroArtUrl, heroPath, cancellationToken);
 
 		return shortcut;
 	}
@@ -71,7 +78,10 @@ public static partial class xCloudShortcutManager
 		if (!File.Exists(heroPath))
 		{
 			StoreDetails storeDetails = await xCloudApi.GetStoreDetails(details.StoreId);
-			await DownloadImage(storeDetails.ProductSummaries[0].Images.SuperHeroArt, heroPath, cancellationToken);
+			string heroArtUrl = storeDetails.ProductSummaries[0].Images.SuperHeroArt;
+
+			if (heroArtUrl is not null)
+				await DownloadImage(heroArtUrl, heroPath, cancellationToken);
 		}
 	}
 
