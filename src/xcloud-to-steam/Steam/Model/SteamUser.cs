@@ -6,4 +6,11 @@ public class SteamUser
 	public required string AccountName { get; init; }
 	public required string PersonaName { get; init; }
 	public required bool MostRecent { get; init; }
+
+	public override string ToString()
+	{
+		return AccountName == PersonaName
+			? AccountName
+			: $"{AccountName} ({PersonaName})";
+	}
 }

@@ -36,16 +36,13 @@ public partial class MainViewModel : ViewModelBase
 	private SteamUser _selectedSteamUser;
 
 	[ObservableProperty]
-	private ShortcutConfigProfile _shortcutConfigProfile;
+	private ObservableCollection<KeyValuePair<string, ShortcutConfigProfile>> _configProfiles;
 
 	[ObservableProperty]
-	private ObservableCollection<ShortcutConfigProfile> _configProfiles;
+	private KeyValuePair<string, ShortcutConfigProfile> _selectedConfigProfile;
 
 	[ObservableProperty]
-	private bool _canApply = false;
-
-	[ObservableProperty]
-	private bool _canSelect = true;
+	private bool _locked = false;
 
 	[ObservableProperty]
 	private string _applyStatus = string.Empty;
@@ -78,6 +75,9 @@ public partial class MainViewModel : ViewModelBase
 
 		m_config = JsonSerializer.Deserialize(File.ReadAllText("config.json"), AppJsonContext.Default.AppConfig)!;
 
+		ConfigProfiles = [.. m_config.Profiles.GetProfilesForCurrentOS()];
+		SelectedConfigProfile = ConfigProfiles.First();
+
 		ObservableCollection<ProductSelection> selections = [];
 
 		foreach (ProductDetails entry in (await getCatalogTask).OrderBy(d => d.ProductTitle))
@@ -89,7 +89,7 @@ public partial class MainViewModel : ViewModelBase
 		Dispatcher.UIThread.Post(() =>
 		{
 			ProductSelections = selections;
-			CanApply = true;
+			Locked = false;
 		});
 	}
 
@@ -152,13 +152,10 @@ public partial class MainViewModel : ViewModelBase
 	[RelayCommand]
 	public async Task Apply()
 	{
-		CanApply    = false;
-		CanSelect   = false;
+		Locked = true;
 		ApplyStatus = "Applying...";
 
 		SteamUserSession session = new(SelectedSteamUser);
-
-		ShortcutConfigProfile profile = m_config.Profiles.GetProfilesForCurrentOS().Values.First();
 
 		LinkedList<ProductSelection>
 			toAddList    = m_selectionGroups[ProductSelectionState.ToAdd],
@@ -176,7 +173,8 @@ public partial class MainViewModel : ViewModelBase
 			{
 				try
 				{
-					SteamShortcut shortcut = await xCloudShortcutManager.CreateShortcut(session, selection.Details, profile, ct);
+					SteamShortcut shortcut = await xCloudShortcutManager.CreateShortcut(
+							session, selection.Details, SelectedConfigProfile.Value, ct);
 
 					lock (m_shortcuts)
 						m_shortcuts.Add(shortcut);
@@ -194,7 +192,9 @@ public partial class MainViewModel : ViewModelBase
 			{
 				try
 				{
-					await xCloudShortcutManager.ModifyShortcut(session, m_shortcutDict[selection.Details.StoreId], selection.Details, profile, ct);
+					await xCloudShortcutManager.ModifyShortcut(
+						session, m_shortcutDict[selection.Details.StoreId], selection.Details, SelectedConfigProfile.Value, ct);
+
 					OnTaskComplete();
 				}
 				catch (Exception ex) { Program.HandleException(ex); }
@@ -226,8 +226,7 @@ public partial class MainViewModel : ViewModelBase
 		Dispatcher.UIThread.Post(() =>
 		{
 			ApplyStatus = "Done!";
-			CanApply    = true;
-			CanSelect   = true;
+			Locked = false;
 		}, DispatcherPriority.Background);
 
 		void OnTaskComplete()
