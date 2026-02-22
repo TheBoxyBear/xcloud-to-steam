@@ -24,13 +24,13 @@
 
 		<Grid Grid.Row="0">
 			<Grid.ColumnDefinitions>
-				<ColumnDefinition Width="*"/>
-				<ColumnDefinition Width="*"/>
-				<ColumnDefinition Width="*"/>
+				<ColumnDefinition Width="2*"/>
+				<ColumnDefinition Width="2*"/>
+				<ColumnDefinition Width="1.5*"/>
 			</Grid.ColumnDefinitions>
 
 			<DockPanel Grid.Column="0" LastChildFill="True">
-				<TextBlock Text="Steam User" VerticalAlignment="Center" Margin="5,0,5,0" DockPanel.Dock="Left"/>
+				<TextBlock Text="User" VerticalAlignment="Center" Margin="5,0,5,0" DockPanel.Dock="Left"/>
 				<ComboBox VerticalAlignment="Center" HorizontalAlignment="Stretch"
 						  IsEnabled="{Binding !Locked}"
 						  ItemsSource="{Binding SteamUsers}"
@@ -38,7 +38,7 @@
 			</DockPanel>
 
 			<DockPanel Grid.Column="1" LastChildFill="True">
-				<TextBlock Text="Config Profile" VerticalAlignment="Center" Margin="5,0,5,0" DockPanel.Dock="Left"/>
+				<TextBlock Text="Config" VerticalAlignment="Center" Margin="5,0,5,0" DockPanel.Dock="Left"/>
 				<ComboBox VerticalAlignment="Center" HorizontalAlignment="Stretch"
 						  IsEnabled="{Binding !Locked}"
 						  ItemsSource="{Binding ConfigProfiles}"
