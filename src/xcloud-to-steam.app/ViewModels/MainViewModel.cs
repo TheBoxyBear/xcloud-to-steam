@@ -1,4 +1,5 @@
-﻿using Avalonia.Threading;
+﻿using Avalonia.Styling;
+using Avalonia.Threading;
 
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -36,6 +37,12 @@ public partial class MainViewModel : ViewModelBase
 	private SteamUser _selectedSteamUser;
 
 	[ObservableProperty]
+	private string[] _markets = [ "CA", "US", "GB", "DE", "FR", "JP" ];
+
+	[ObservableProperty]
+	private string _selectedMarket = "US";
+
+	[ObservableProperty]
 	private ObservableCollection<KeyValuePair<string, ShortcutConfigProfile>> _configProfiles;
 
 	[ObservableProperty]
@@ -64,10 +71,7 @@ public partial class MainViewModel : ViewModelBase
 
 	public async Task Initialize()
 	{
-		Task<ProductDetails[]> getCatalogTask =
-			Task.Run(() => xCloudApi.GetCatalog().ToArrayAsync().AsTask()
-			.ContinueWith(task => xCloudApi.GetDetails(task.Result).ToArrayAsync().AsTask())
-			.Unwrap());
+		Task<ProductDetails[]> getCatalogTask = Task.Run(GetCatalogTask);
 
 		SteamUsers = [.. SteamManager.GetUsers()];
 		SelectedSteamUser = SteamUsers.FirstOrDefault(user => user.MostRecent, SteamUsers[0]);
@@ -80,20 +84,7 @@ public partial class MainViewModel : ViewModelBase
 		ConfigProfiles = [.. m_config.Profiles.GetProfilesForCurrentOS()];
 		SelectedConfigProfile = ConfigProfiles.First();
 
-		ObservableCollection<ProductSelection> selections = [];
-
-		foreach (ProductDetails entry in (await getCatalogTask).FilterEditions().OrderBy(d => d.ProductTitle))
-		{
-			string formattedTitle = entry.ProductTitle;
-
-			if (formattedTitle.EndsWith(" Standard Edition", StringComparison.OrdinalIgnoreCase))
-				formattedTitle = formattedTitle[..^" Standard Edition".Length];
-
-			formattedTitle = formattedTitle.Replace("©", "").Replace("®", "").Replace("™", "");
-
-			selections.Add(new(formattedTitle != entry.ProductTitle
-				? entry with { ProductTitle = formattedTitle } : entry));
-		}
+		ObservableCollection<ProductSelection> selections = new(GetSelectionsFromCatalog(await getCatalogTask));
 
 		await shortcutTask;
 		UpdateStatusesForCurrentUser(selections);
@@ -105,7 +96,26 @@ public partial class MainViewModel : ViewModelBase
 		});
 	}
 
-	public void LoadCurrentUserShortcuts()
+	private static Task<ProductDetails[]> GetCatalogTask()
+		=> xCloudApi.GetCatalog().ToArrayAsync().AsTask()
+			.ContinueWith(task => xCloudApi.GetDetails(task.Result, "CA").ToArrayAsync().AsTask())
+			.Unwrap();
+
+	private static IEnumerable<ProductSelection> GetSelectionsFromCatalog(ProductDetails[] details)
+		=> details.FilterEditions().OrderBy(d => d.ProductTitle).Select(entry =>
+		{
+			string formattedTitle = entry.ProductTitle;
+
+			if (formattedTitle.EndsWith(" Standard Edition", StringComparison.OrdinalIgnoreCase))
+				formattedTitle = formattedTitle[..^" Standard Edition".Length];
+
+			formattedTitle = formattedTitle.Replace("©", "").Replace("®", "").Replace("™", "");
+
+			return new ProductSelection(formattedTitle != entry.ProductTitle
+				? entry with { ProductTitle = formattedTitle } : entry);
+		});
+
+	private void LoadCurrentUserShortcuts()
 	{
 		m_shortcuts = SteamShortcut.Read(m_session);
 		m_shortcutDict = m_shortcuts
@@ -139,6 +149,22 @@ public partial class MainViewModel : ViewModelBase
 		UpdateStatusesForCurrentUser(ProductSelections);
 
 		m_session = new(SelectedSteamUser);
+	}
+
+	async partial void OnSelectedMarketChanged(string? oldValue, string newValue)
+	{
+		// Handled better in Initialize
+		if (oldValue is null)
+			return;
+
+		Locked = true;
+
+		ObservableCollection<ProductSelection> selections = [.. GetSelectionsFromCatalog(await GetCatalogTask())];
+		UpdateStatusesForCurrentUser(selections);
+
+		ProductSelections = selections;
+
+		Locked = false;
 	}
 
 	[RelayCommand]
