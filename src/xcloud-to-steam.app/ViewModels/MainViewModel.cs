@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -37,10 +38,10 @@ public partial class MainViewModel : ViewModelBase
 	private SteamUser _selectedSteamUser;
 
 	[ObservableProperty]
-	private string[] _markets = [ "CA", "US", "GB", "DE", "FR", "JP" ];
+	private string[] _markets = [.. s_marketCodes.Keys];
 
 	[ObservableProperty]
-	private string _selectedMarket = "US";
+	private string _selectedMarket;
 
 	[ObservableProperty]
 	private ObservableCollection<KeyValuePair<string, ShortcutConfigProfile>> _configProfiles;
@@ -67,10 +68,46 @@ public partial class MainViewModel : ViewModelBase
 	private List<SteamShortcut> m_shortcuts;
 	private SteamUserSession m_session;
 
+	private static readonly Dictionary<string, string> s_marketCodes = new()
+	{
+		{ "Argentina", "AR" },
+		{ "Australia", "AU" },
+		{ "Austria", "AT" },
+		{ "Belgium", "BE" },
+		{ "Brazil", "BR" },
+		{ "Canada", "CA" },
+		{ "Chile", "CL" },
+		{ "Colombia", "CO" },
+		{ "Czech Republic", "CZ" },
+		{ "Denmark", "DK" },
+		{ "Finland", "FI" },
+		{ "France", "FR" },
+		{ "Germany", "DE" },
+		{ "Hungary", "HU" },
+		{ "Ireland", "IE" },
+		{ "Italy", "IT" },
+		{ "Japan", "JP" },
+		{ "Mexico", "MX" },
+		{ "Netherlands", "NL" },
+		{ "New Zealand", "NZ" },
+		{ "Norway", "NO" },
+		{ "Poland", "PL" },
+		{ "Slovakia", "SK" },
+		{ "South Korea", "KR" },
+		{ "Spain", "ES" },
+		{ "Sweden", "SE" },
+		{ "Switzerland", "CH" },
+		{ "United Kingdom", "GB" },
+		{ "United States", "US" }
+	};
+
 	public MainViewModel() { }
 
 	public async Task Initialize()
 	{
+		string regionName = RegionInfo.CurrentRegion.EnglishName;
+		SelectedMarket = s_marketCodes.ContainsKey(regionName) ? regionName : "United States";
+
 		Task<ProductDetails[]> getCatalogTask = Task.Run(GetCatalogTask);
 
 		SteamUsers = [.. SteamManager.GetUsers()];
@@ -96,9 +133,9 @@ public partial class MainViewModel : ViewModelBase
 		});
 	}
 
-	private static Task<ProductDetails[]> GetCatalogTask()
+	private Task<ProductDetails[]> GetCatalogTask()
 		=> xCloudApi.GetCatalog().ToArrayAsync().AsTask()
-			.ContinueWith(task => xCloudApi.GetDetails(task.Result, "CA").ToArrayAsync().AsTask())
+			.ContinueWith(task => xCloudApi.GetDetails(task.Result, s_marketCodes[SelectedMarket]).ToArrayAsync().AsTask())
 			.Unwrap();
 
 	private static IEnumerable<ProductSelection> GetSelectionsFromCatalog(ProductDetails[] details)
