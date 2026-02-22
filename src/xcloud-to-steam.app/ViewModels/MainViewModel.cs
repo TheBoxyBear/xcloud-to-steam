@@ -42,7 +42,7 @@ public partial class MainViewModel : ViewModelBase
 	private KeyValuePair<string, ShortcutConfigProfile> _selectedConfigProfile;
 
 	[ObservableProperty]
-	private bool _locked = false;
+	private bool _locked = true;
 
 	[ObservableProperty]
 	private string _applyStatus = string.Empty;

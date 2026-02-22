@@ -57,7 +57,7 @@ public static class xCloudApi
 			yield return missingId;
 	}
 
-	public static async IAsyncEnumerable<ProductDetails> GetDetails(IEnumerable<string> ids, CancellationToken cancellationToken = default)
+	public static async IAsyncEnumerable<ProductDetails> GetDetails(IEnumerable<string> ids, string market, CancellationToken cancellationToken = default)
 	{
 		ProductRootDto<IEnumerable<string>> dto = new()
 		{
@@ -68,7 +68,7 @@ public static class xCloudApi
 
 		request
 			.AddQueryParameter("hydration", "RemoteLowJade0")
-			.AddQueryParameter("market", "CA")
+			.AddQueryParameter("market", market)
 			.AddQueryParameter("language", "en-CA")
 			.AddHeader("ms-cv", GenerateCorrelationVector())
 			.AddHeader("calling-app-name", "xCloud To Steam")
