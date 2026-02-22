@@ -3,6 +3,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
@@ -10,6 +11,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 
 using xCloudToSteam.App.Models;
@@ -28,7 +30,10 @@ public partial class MainViewModel : ViewModelBase
 	private ObservableCollection<ProductSelection> _productSelections = [];
 
 	[ObservableProperty]
-	private SteamUser? _steamUser;
+	private ObservableCollection<SteamUser> _steamUsers;
+
+	[ObservableProperty]
+	private SteamUser _selectedSteamUser;
 
 	[ObservableProperty]
 	private ShortcutConfigProfile _shortcutConfigProfile;
@@ -55,42 +60,31 @@ public partial class MainViewModel : ViewModelBase
 	};
 
 	private AppConfig m_config;
-	private SteamUserSession m_session;
 	private List<SteamShortcut> m_shortcuts;
 
-	public MainViewModel()
-	{
+	public MainViewModel() { }
 
-	}
-
-	public async Task LoadCatalog()
+	public async Task Initialize()
 	{
 		Task<ProductDetails[]> getCatalogTask =
-			xCloudApi.GetCatalog().ToArrayAsync().AsTask()
+			Task.Run(() => xCloudApi.GetCatalog().ToArrayAsync().AsTask()
 			.ContinueWith(task => xCloudApi.GetDetails(task.Result).ToArrayAsync().AsTask())
-			.Unwrap();
+			.Unwrap());
 
-		m_config       = JsonSerializer.Deserialize(File.ReadAllText("config.json"), AppJsonContext.Default.AppConfig)!;
-		m_session      = new(SteamManager.GetUsers().First(u => u.MostRecent));
-		m_shortcuts    = SteamShortcut.Read(m_session);
-		m_shortcutDict = m_shortcuts
-							.Where(static s => s.IsXCloudShortcut)
-							.ToDictionary(static s => s.XCloudStoreId);
+		SteamUsers = [.. SteamManager.GetUsers()];
+		SelectedSteamUser = SteamUsers.FirstOrDefault(user => user.MostRecent, SteamUsers[0]);
+
+		Task shortcutTask = Task.Run(LoadCurrentUserShortcuts);
+
+		m_config = JsonSerializer.Deserialize(File.ReadAllText("config.json"), AppJsonContext.Default.AppConfig)!;
 
 		ObservableCollection<ProductSelection> selections = [];
 
 		foreach (ProductDetails entry in (await getCatalogTask).OrderBy(d => d.ProductTitle))
-		{
-			ProductSelection selection = new(entry)
-			{
-				SelectionState = m_shortcutDict.ContainsKey(entry.StoreId)
-					? ProductSelectionState.Added
-					: ProductSelectionState.Missing
-			};
+			selections.Add(new(entry));
 
-			selections.Add(selection);
-			m_selectionGroups[selection.SelectionState].AddLast(selection);
-		}
+		await shortcutTask;
+		UpdateStatusesForCurrentUser(selections);
 
 		Dispatcher.UIThread.Post(() =>
 		{
@@ -99,20 +93,48 @@ public partial class MainViewModel : ViewModelBase
 		});
 	}
 
+	public void LoadCurrentUserShortcuts()
+	{
+		SteamUserSession session = new(SelectedSteamUser);
+
+		m_shortcuts = SteamShortcut.Read(session);
+		m_shortcutDict = m_shortcuts
+			.Where(static s => s.IsXCloudShortcut)
+			.ToDictionary(static s => s.XCloudStoreId);
+	}
+
+	public void UpdateStatusesForCurrentUser(ObservableCollection<ProductSelection> selections)
+	{
+		foreach (ProductSelection selection in selections)
+		{
+			ProductSelectionState newState = m_shortcutDict.ContainsKey(selection.Details.StoreId)
+				? ProductSelectionState.Added
+				: ProductSelectionState.Missing;
+
+			if (selection.SelectionState != newState)
+			{
+				m_selectionGroups[selection.SelectionState].Remove(selection);
+				UpdateSelectionState(selection, newState);
+			}
+		}
+	}
+
 	[RelayCommand]
 	public void Product_OnClick(ProductSelection selection)
-		=> UpdateSelectionState(selection, selection.SelectionState switch
-		{
-			ProductSelectionState.Missing  => ProductSelectionState.ToAdd,
-			ProductSelectionState.Added    => ProductSelectionState.ToRemove,
-			ProductSelectionState.ToAdd    => ProductSelectionState.Missing,
-			ProductSelectionState.ToRemove => ProductSelectionState.Added
-		});
-
-	private void UpdateSelectionState(ProductSelection selection, ProductSelectionState newState)
 	{
 		m_selectionGroups[selection.SelectionState].Remove(selection);
 
+		UpdateSelectionState(selection, selection.SelectionState switch
+		{
+			ProductSelectionState.Missing => ProductSelectionState.ToAdd,
+			ProductSelectionState.Added => ProductSelectionState.ToRemove,
+			ProductSelectionState.ToAdd => ProductSelectionState.Missing,
+			ProductSelectionState.ToRemove => ProductSelectionState.Added
+		});
+	}
+
+	private void UpdateSelectionState(ProductSelection selection, ProductSelectionState newState)
+	{
 		m_selectionGroups[newState].AddLast(selection);
 		selection.SelectionState = newState;
 	}
@@ -120,9 +142,11 @@ public partial class MainViewModel : ViewModelBase
 	[RelayCommand]
 	public async Task Apply()
 	{
-		CanApply  = false;
-		CanSelect = false;
+		CanApply    = false;
+		CanSelect   = false;
 		ApplyStatus = "Applying...";
+
+		SteamUserSession session = new(SelectedSteamUser);
 
 		ShortcutConfigProfile profile = m_config.Profiles.GetProfilesForCurrentOS().Values.First();
 
@@ -135,60 +159,73 @@ public partial class MainViewModel : ViewModelBase
 			completedTasks = 0,
 			totalTasks     = (uint)(toAddList.Count + toModifyList.Count + toRemoveList.Count);
 
-		Task<SteamShortcut>[] addTasks = [.. toAddList.Select(s =>
-			Task.Run(() => xCloudShortcutManager.CreateShortcut(m_session, s.Details, profile))
-				.ContinueWith(t =>
+		ParallelOptions parallelOptions = new() { MaxDegreeOfParallelism = 4 };
+
+		Task addTask = Parallel.ForEachAsync(toAddList, parallelOptions,
+			async (selection, ct) =>
+			{
+				try
 				{
-					if (t.IsFaulted)
-						Program.HandleException(t.Exception);
+					SteamShortcut shortcut = await xCloudShortcutManager.CreateShortcut(session, selection.Details, profile, ct);
+
+					lock (m_shortcuts)
+						m_shortcuts.Add(shortcut);
+
+					lock (m_shortcutDict)
+						m_shortcutDict[selection.Details.StoreId] = shortcut;
 
 					OnTaskComplete();
-					return t.Result;
-				}))];
+				}
+				catch (Exception ex) { Program.HandleException(ex); }
+			});
 
-		Task[] modifyTasks = [.. toModifyList.Select(s =>
-			Task.Run(() => xCloudShortcutManager.ModifyShortcut(m_session, m_shortcutDict[s.Details.StoreId], s.Details, profile)
-				.ContinueWith(t =>
+		Task modifyTask = Parallel.ForEachAsync(toModifyList, parallelOptions,
+			async (selection, ct) =>
+			{
+				try
 				{
-					if (t.IsFaulted)
-						Program.HandleException(t.Exception);
-
+					await xCloudShortcutManager.ModifyShortcut(session, m_shortcutDict[selection.Details.StoreId], selection.Details, profile, ct);
 					OnTaskComplete();
-				})))];
+				}
+				catch (Exception ex) { Program.HandleException(ex); }
+			});
 
 		foreach (ProductSelection toRemove in toRemoveList)
-		{
-			int removeIndex = m_shortcuts.FindIndex(s => s.IsXCloudShortcut && s.XCloudStoreId == toRemove.Details.StoreId);
-
-			if (removeIndex >= 0)
+			if (m_shortcutDict.TryGetValue(toRemove.Details.StoreId, out SteamShortcut? shortcut))
 			{
-				m_shortcuts.RemoveAt(removeIndex);
+				m_shortcuts.Remove(shortcut);
+				m_shortcutDict.Remove(toRemove.Details.StoreId);
+
 				OnTaskComplete();
 			}
-		}
 
-		await Task.WhenAll(addTasks);
-		m_shortcuts.AddRange(addTasks.Select(t => t.Result));
+		await Task.WhenAll(addTask, modifyTask);
 
-		foreach (ProductSelection selection in toAddList.ToArray())
+		foreach (ProductSelection selection in toAddList)
 			UpdateSelectionState(selection, ProductSelectionState.Added);
 
-		foreach (ProductSelection selection in toRemoveList.ToArray())
+		foreach (ProductSelection selection in toRemoveList)
 			UpdateSelectionState(selection, ProductSelectionState.Missing);
 
-		await Task.WhenAll(modifyTasks);
+		m_selectionGroups[ProductSelectionState.ToAdd].Clear();
+		m_selectionGroups[ProductSelectionState.ToRemove].Clear();
 
-		await SteamShortcut.Write(m_session, m_shortcuts);
+		await SteamShortcut.Write(session, m_shortcuts);
 
-		ApplyStatus = "Done!";
-		CanApply    = true;
-		CanSelect   = true;
+		// Could be ran inline, but queing it avoids race conditions with the parallel tasks updating the status
+		Dispatcher.UIThread.Post(() =>
+		{
+			ApplyStatus = "Done!";
+			CanApply    = true;
+			CanSelect   = true;
+		}, DispatcherPriority.Background);
 
 		void OnTaskComplete()
 		{
-			completedTasks++;
+			Interlocked.Increment(ref completedTasks);
 
-			Dispatcher.UIThread.Post(() => ApplyStatus = $"Applying... ({completedTasks}/{totalTasks})",
+			Dispatcher.UIThread.Post(() =>
+				ApplyStatus = $"Applying... ({completedTasks}/{totalTasks})",
 				DispatcherPriority.Background);
 		}
 	}

@@ -10,7 +10,29 @@ namespace xCloudToSteam.Steam.Model;
 
 public record class SteamShortcut
 {
-	private readonly List<string> m_keys = [];
+	private static readonly List<string> s_defaultKeys =
+	[
+		"AppName",
+		"Exe",
+		"appid",
+		"StartDir",
+		"icon",
+		"ShortcutPath",
+		"LaunchOptions",
+		"IsHidden",
+		"AllowDesktopConfig",
+		"AllowOverlay",
+		"OpenVR",
+		"Devkit",
+		"DevkitGameID",
+		"DevkitOverrideAppID",
+		"LastPlayTime",
+		"FlatpakAppID",
+		"SortAs",
+		"tags"
+	];
+
+	private List<string> Keys { get; init; } = [];
 
 	public SteamId AppId { get; set; }
 	public string AppName { get; set; } = string.Empty;
@@ -36,7 +58,8 @@ public record class SteamShortcut
 		SteamShortcut shortcut = new()
 		{
 			AppName = appName,
-			Exe = exe
+			Exe     = exe,
+			Keys = s_defaultKeys
 		};
 
 		shortcut.AppId = GenerateAppID(shortcut);
@@ -165,7 +188,7 @@ public record class SteamShortcut
 					continue;
 			}
 
-			shortcut.m_keys.Add(key);
+			shortcut.Keys.Add(key);
 		}
 
 		return shortcut;
@@ -177,11 +200,11 @@ public record class SteamShortcut
 
 	private static KVObject Serialize(SteamShortcut shortcut, int index)
 	{
-		KVObject[] dict = new KVObject[shortcut.m_keys.Count];
+		KVObject[] dict = new KVObject[shortcut.Keys.Count];
 
-		for (int i = 0; i < shortcut.m_keys.Count; i++)
+		for (int i = 0; i < shortcut.Keys.Count; i++)
 		{
-			string key = shortcut.m_keys[i];
+			string key = shortcut.Keys[i];
 
 			switch (key.ToLower())
 			{
