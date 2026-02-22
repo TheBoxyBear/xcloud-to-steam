@@ -58,6 +58,7 @@ public partial class MainViewModel : ViewModelBase
 
 	private AppConfig m_config;
 	private List<SteamShortcut> m_shortcuts;
+	private SteamUserSession m_session;
 
 	public MainViewModel() { }
 
@@ -95,9 +96,7 @@ public partial class MainViewModel : ViewModelBase
 
 	public void LoadCurrentUserShortcuts()
 	{
-		SteamUserSession session = new(SelectedSteamUser);
-
-		m_shortcuts = SteamShortcut.Read(session);
+		m_shortcuts = SteamShortcut.Read(m_session);
 		m_shortcutDict = m_shortcuts
 			.Where(static s => s.IsXCloudShortcut)
 			.ToDictionary(static s => s.XCloudStoreId);
@@ -127,6 +126,8 @@ public partial class MainViewModel : ViewModelBase
 
 		LoadCurrentUserShortcuts();
 		UpdateStatusesForCurrentUser(ProductSelections);
+
+		m_session = new(SelectedSteamUser);
 	}
 
 	[RelayCommand]
@@ -155,8 +156,6 @@ public partial class MainViewModel : ViewModelBase
 		Locked = true;
 		ApplyStatus = "Applying...";
 
-		SteamUserSession session = new(SelectedSteamUser);
-
 		LinkedList<ProductSelection>
 			toAddList    = m_selectionGroups[ProductSelectionState.ToAdd],
 			toModifyList = m_selectionGroups[ProductSelectionState.Added],
@@ -174,7 +173,7 @@ public partial class MainViewModel : ViewModelBase
 				try
 				{
 					SteamShortcut shortcut = await xCloudShortcutManager.CreateShortcut(
-							session, selection.Details, SelectedConfigProfile.Value, ct);
+							m_session, selection.Details, SelectedConfigProfile.Value, ct);
 
 					lock (m_shortcuts)
 						m_shortcuts.Add(shortcut);
@@ -193,7 +192,7 @@ public partial class MainViewModel : ViewModelBase
 				try
 				{
 					await xCloudShortcutManager.ModifyShortcut(
-						session, m_shortcutDict[selection.Details.StoreId], selection.Details, SelectedConfigProfile.Value, ct);
+						m_session, m_shortcutDict[selection.Details.StoreId], selection.Details, SelectedConfigProfile.Value, ct);
 
 					OnTaskComplete();
 				}
@@ -220,7 +219,7 @@ public partial class MainViewModel : ViewModelBase
 		m_selectionGroups[ProductSelectionState.ToAdd].Clear();
 		m_selectionGroups[ProductSelectionState.ToRemove].Clear();
 
-		await SteamShortcut.Write(session, m_shortcuts);
+		await SteamShortcut.Write(m_session, m_shortcuts);
 
 		// Could be ran inline, but queing it avoids race conditions with the parallel tasks updating the status
 		Dispatcher.UIThread.Post(() =>
