@@ -50,10 +50,6 @@ public static class xCloudApi
 			if (missingIdIndex != -1)
 				missingIds.RemoveAt(missingIdIndex);
 
-			// Skip Just Dance as it's unplayable over cloud
-			if (dto.Id == "9P0LHV4DV2BG")
-				continue;
-
 			yield return dto.Id;
 		}
 
