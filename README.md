@@ -30,7 +30,7 @@
 The app is ready to use out of the box. The default configuration will launch the official web app on the Edge browser in full screen kiosk mode.
 
 ## Linux
-The default profile relies on the `browser` and `kiosk` shell scripts found in [this repository](https://github.com/theboxybear/deck-xcloud-scripts). Follow the setup guide, while making sure to place the scripts in your Home directory.
+The default profile relies on the `browser` and `kiosk` shell scripts found in [this repository](https://github.com/theboxybear/deck-xcloud-scripts). Follow the setup guide, while making sure to place the scripts in your Home directory. This configuration has been primarily tested on StemOS and may not work on other distributions.
 
 Alternatively, you can create your own config profile for your preferred environment and add it to **config.json**
 
