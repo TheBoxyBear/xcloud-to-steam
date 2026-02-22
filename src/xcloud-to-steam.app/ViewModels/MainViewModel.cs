@@ -71,6 +71,7 @@ public partial class MainViewModel : ViewModelBase
 
 		SteamUsers = [.. SteamManager.GetUsers()];
 		SelectedSteamUser = SteamUsers.FirstOrDefault(user => user.MostRecent, SteamUsers[0]);
+		m_session = new(SelectedSteamUser);
 
 		Task shortcutTask = Task.Run(LoadCurrentUserShortcuts);
 
