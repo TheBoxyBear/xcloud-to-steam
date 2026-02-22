@@ -33,7 +33,7 @@ public static partial class xCloudShortcutManager
 		=> shortcuts.FirstOrDefault(s => s.IsXCloudShortcut && s.XCloudStoreId == storeId);
 
 	public static IEnumerable<ProductDetails> FilterEditions(this IEnumerable<ProductDetails> products)
-		=> products.GroupBy(p => p.ProductTitle).SelectMany(grouping =>
+		=> products.GroupBy(p => p.XCloudTitleId).SelectMany(grouping =>
 		{
 			if (string.IsNullOrEmpty(grouping.Key))
 				return grouping.AsEnumerable();
@@ -44,16 +44,27 @@ public static partial class xCloudShortcutManager
 				return [editions[0]];
 
 			ProductDetails? preferred = editions.FirstOrDefault(p =>
-				!p.ProductTitle?.EndsWith("Edition", StringComparison.OrdinalIgnoreCase) == true &&
-				!p.ProductTitle?.EndsWith("Bundle", StringComparison.OrdinalIgnoreCase) == true);
+				!p.ProductTitle?.Contains("Edition", StringComparison.OrdinalIgnoreCase) is true &&
+				!p.ProductTitle?.Contains("Bundle", StringComparison.OrdinalIgnoreCase) is true);
 
 			if (preferred is not null)
 				return [preferred];
 
 			ProductDetails? standard = editions.FirstOrDefault(p =>
-				p.ProductTitle?.EndsWith("Standard Edition", StringComparison.OrdinalIgnoreCase) == true);
+				p.ProductTitle?.Contains("Standard Edition", StringComparison.OrdinalIgnoreCase) is true);
 
-			return standard is not null ? [standard] : editions;
+			if (standard is not null)
+				return [standard];
+
+			string[] descriptors =
+					["Complete", "Deluxe", "Ultimate", "Premium", "Gold", "Platinum", "Limited", "Special"];
+
+			ProductDetails[] withoutDescriptors = [.. editions.Where(p =>
+					!descriptors.Any(d => p.ProductTitle?.Contains(d, StringComparison.OrdinalIgnoreCase) is true)
+				)];
+
+			return withoutDescriptors.Length == 0
+				? editions : withoutDescriptors;
 		});
 
 	public static async Task<SteamShortcut> CreateShortcut(SteamUserSession session, ProductDetails details, ShortcutConfigProfile config, CancellationToken cancellationToken = default)
