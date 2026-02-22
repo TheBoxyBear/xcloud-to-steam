@@ -92,7 +92,7 @@
 			Width="200" Height="100" Margin="10" Padding="10">
 		<StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
 			<TextBlock Text="Apply" FontSize="16" FontWeight="Bold" TextAlignment="Center"/>
-			<TextBlock Text="{Binding ApplyStatus}" FontSize="12" TextAlignment="Center" Margin="0,5,0,0"/>
+			<TextBlock Text="{Binding ApplyStatus}" FontSize="12" TextAlignment="Center" Margin="0,5,0,5"/>
 			</StackPanel>
 		</Button>
 	</Grid>
