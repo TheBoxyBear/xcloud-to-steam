@@ -119,6 +119,16 @@ public partial class MainViewModel : ViewModelBase
 		}
 	}
 
+	partial void OnSelectedSteamUserChanged(SteamUser? oldValue, SteamUser newValue)
+	{
+		// Handled more optimally in Initialize
+		if (oldValue is null)
+			return;
+
+		LoadCurrentUserShortcuts();
+		UpdateStatusesForCurrentUser(ProductSelections);
+	}
+
 	[RelayCommand]
 	public void Product_OnClick(ProductSelection selection)
 	{
