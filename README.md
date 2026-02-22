@@ -36,3 +36,8 @@ Alternatively, you can create your own config profile for your preferred environ
 
 ## MacOS
 The app doesn't currently include a default config profile for macOS. You must create your own and add it to **config.json**
+
+## Known bugs
+- General instability when running on a weak Internet connection or during an Xbox service outage
+- Crash when **config.json** is missing or cannot find a config profile for the host OS
+- App fails to identify the device's country on SteamOS
