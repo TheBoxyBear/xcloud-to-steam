@@ -82,8 +82,18 @@ public partial class MainViewModel : ViewModelBase
 
 		ObservableCollection<ProductSelection> selections = [];
 
-		foreach (ProductDetails entry in (await getCatalogTask).OrderBy(d => d.ProductTitle))
-			selections.Add(new(entry));
+		foreach (ProductDetails entry in (await getCatalogTask).FilterEditions().OrderBy(d => d.ProductTitle))
+		{
+			string formattedTitle = entry.ProductTitle;
+
+			if (formattedTitle.EndsWith(" Standard Edition", StringComparison.OrdinalIgnoreCase))
+				formattedTitle = formattedTitle[..^" Standard Edition".Length];
+
+			formattedTitle = formattedTitle.Replace("©", "").Replace("®", "").Replace("™", "");
+
+			selections.Add(new(formattedTitle != entry.ProductTitle
+				? entry with { ProductTitle = formattedTitle } : entry));
+		}
 
 		await shortcutTask;
 		UpdateStatusesForCurrentUser(selections);

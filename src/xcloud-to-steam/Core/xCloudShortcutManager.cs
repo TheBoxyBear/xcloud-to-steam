@@ -32,6 +32,30 @@ public static partial class xCloudShortcutManager
 	public static SteamShortcut? Find(string storeId, params IEnumerable<SteamShortcut> shortcuts)
 		=> shortcuts.FirstOrDefault(s => s.IsXCloudShortcut && s.XCloudStoreId == storeId);
 
+	public static IEnumerable<ProductDetails> FilterEditions(this IEnumerable<ProductDetails> products)
+		=> products.GroupBy(p => p.ProductTitle).SelectMany(grouping =>
+		{
+			if (string.IsNullOrEmpty(grouping.Key))
+				return grouping.AsEnumerable();
+
+			ProductDetails[] editions = [.. grouping];
+
+			if (editions.Length == 1)
+				return [editions[0]];
+
+			ProductDetails? preferred = editions.FirstOrDefault(p =>
+				!p.ProductTitle?.EndsWith("Edition", StringComparison.OrdinalIgnoreCase) == true &&
+				!p.ProductTitle?.EndsWith("Bundle", StringComparison.OrdinalIgnoreCase) == true);
+
+			if (preferred is not null)
+				return [preferred];
+
+			ProductDetails? standard = editions.FirstOrDefault(p =>
+				p.ProductTitle?.EndsWith("Standard Edition", StringComparison.OrdinalIgnoreCase) == true);
+
+			return standard is not null ? [standard] : editions;
+		});
+
 	public static async Task<SteamShortcut> CreateShortcut(SteamUserSession session, ProductDetails details, ShortcutConfigProfile config, CancellationToken cancellationToken = default)
 	{
 		SteamShortcut shortcut = SteamShortcut.Create(FillTemplate(config.AppName, details), FillTemplate(config.Exe, details)) with

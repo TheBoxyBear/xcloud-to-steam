@@ -4,7 +4,7 @@ using xCloudToSteam.xCloud.Converters;
 
 namespace xCloudToSteam.xCloud.Model;
 
-public class ProductDetails
+public record class ProductDetails
 {
 	public required string ProductTitle { get; init; }
 
