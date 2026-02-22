@@ -22,41 +22,37 @@
 			<RowDefinition Height="100"/>
 		</Grid.RowDefinitions>
 
-		<!-- Nested Grid for top row -->
 		<Grid Grid.Row="0">
 			<Grid.ColumnDefinitions>
 				<ColumnDefinition Width="*"/>
 				<ColumnDefinition Width="*"/>
+				<ColumnDefinition Width="*"/>
 			</Grid.ColumnDefinitions>
 
-			<!-- Left column with label and combobox -->
-			<Grid Grid.Column="0">
-				<Grid.ColumnDefinitions>
-					<ColumnDefinition Width="Auto"/>
-					<ColumnDefinition Width="*"/>
-				</Grid.ColumnDefinitions>
-
-				<TextBlock Grid.Column="0" Text="Steam User" VerticalAlignment="Center"/>
-				<ComboBox Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Stretch"
+			<DockPanel Grid.Column="0" LastChildFill="True">
+				<TextBlock Text="Steam User" VerticalAlignment="Center" Margin="5,0,5,0" DockPanel.Dock="Left"/>
+				<ComboBox VerticalAlignment="Center" HorizontalAlignment="Stretch"
 						  IsEnabled="{Binding !Locked}"
 						  ItemsSource="{Binding SteamUsers}"
 						  SelectedItem="{Binding SelectedSteamUser}"/>
-			</Grid>
+			</DockPanel>
 
-			<!-- Right column with label and combobox -->
-			<Grid Grid.Column="1">
-				<Grid.ColumnDefinitions>
-					<ColumnDefinition Width="Auto"/>
-					<ColumnDefinition Width="*"/>
-				</Grid.ColumnDefinitions>
-
-				<TextBlock Grid.Column="0" Text="Config Profile" VerticalAlignment="Center"/>
-				<ComboBox Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Stretch"
+			<DockPanel Grid.Column="1" LastChildFill="True">
+				<TextBlock Text="Config Profile" VerticalAlignment="Center" Margin="5,0,5,0" DockPanel.Dock="Left"/>
+				<ComboBox VerticalAlignment="Center" HorizontalAlignment="Stretch"
 						  IsEnabled="{Binding !Locked}"
 						  ItemsSource="{Binding ConfigProfiles}"
 						  SelectedItem="{Binding SelectedConfigProfile}"
 						  DisplayMemberBinding="{Binding Key}"/>
-			</Grid>
+			</DockPanel>
+
+			<DockPanel Grid.Column="2" LastChildFill="True">
+				<TextBlock Text="Region" VerticalAlignment="Center" Margin="5,0,5,0" DockPanel.Dock="Left"/>
+				<ComboBox VerticalAlignment="Center" HorizontalAlignment="Stretch"
+						  IsEnabled="{Binding !Locked}"
+						  ItemsSource="{Binding Markets}"
+						  SelectedItem="{Binding SelectedMarket}"/>
+			</DockPanel>
 		</Grid>
 
 		<ListBox ItemsSource="{Binding ProductSelections}" Grid.Row="1">
@@ -74,7 +70,7 @@
 						IsEnabled="{Binding !$parent[ListBox].((vm:MainViewModel)DataContext).Locked}"
 						Width="200" Height="150" Margin="10" Padding="10">
 					<StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" ToolTip.Tip="{Binding Details.ProductTitle}">
-						<TextBlock Text="{Binding Details.ProductTitle}" TextWrapping="Wrap" MaxLines="3" TextTrimming="CharacterEllipsis" FontSize="16" FontWeight="Bold" TextAlignment="Center"/>
+						<TextBlock Text="{Binding Details.ProductTitle}" TextWrapping="Wrap" MaxLines="2" TextTrimming="CharacterEllipsis" FontSize="16" FontWeight="Bold" TextAlignment="Center"/>
 						<TextBlock Text="{Binding SelectionState}" FontSize="12" TextAlignment="Center" Margin="0,5,0,0"/>
 					</StackPanel>
 					<Button.ContextMenu>
