@@ -32,12 +32,16 @@ The app is ready to use out of the box. The default configuration will launch th
 ## Linux
 The default profile relies on the `browser` and `kiosk` shell scripts found in [this repository](https://github.com/theboxybear/deck-xcloud-scripts). Follow the setup guide, while making sure to place the scripts in your Home directory. This configuration has been primarily tested on StemOS and may not work on other distributions.
 
+## Per-game configurations
+The app currently doesn't support using different configuration profiles on a per-game basis. Selecting Apply will overwrite all existing and new shortcuts with the currently selected profile. You may however create a profile that routes shortcuts to a custom program/script to launch the shortcut differently based on the game.
+
 Alternatively, you can create your own config profile for your preferred environment and add it to **config.json**
 
 ## MacOS
 The app doesn't currently include a default config profile for macOS. You must create your own and add it to **config.json**
 
 ## Known bugs
+- Random crashes when running for a few minutes. Apply your changes every now and then to keep your selwctions
 - General instability when running on a weak Internet connection or during an Xbox service outage
 - Crash when **config.json** is missing or cannot find a config profile for the host OS
 - App fails to identify the device's country on SteamOS
