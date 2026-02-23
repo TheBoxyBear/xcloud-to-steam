@@ -46,7 +46,7 @@ The app doesn't currently include a default config profile for macOS. You must c
 The app currently doesn't support using different configuration profiles on a per-game basis. Selecting Apply will overwrite all existing and new shortcuts with the currently selected profile. You may however create a profile that routes shortcuts to a custom program/script to launch the shortcut differently based on the game.
 
 ## Known bugs
-- Random crashes when running for a few minutes. Apply your changes every now and then to keep your selwctions
+- Random crashes when running for a few minutes. Apply your changes every now and then to keep your selections
 - General instability when running on a weak Internet connection or during an Xbox service outage
 - Crash when **config.json** is missing or cannot find a config profile for the host OS
 - App fails to identify the device's country on SteamOS
