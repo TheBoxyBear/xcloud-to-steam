@@ -33,7 +33,7 @@ The app is ready to use out of the box. The default configuration will launch th
 The default profile relies on the `browser` and `kiosk` shell scripts found in [this repository](https://github.com/theboxybear/deck-xcloud-scripts). Follow the setup guide, while making sure to place the scripts in your Home directory. This configuration has been primarily tested on StemOS and may not work on other distributions.
 
 ### Greenlight app
-A custom profile may be created targeting the [Greenlight](https://github.com/unknownskl/greenlight) app, utilizing it's ability to launch a game through an argument. To forward the argument to Greenlight, include `{xCloudId}` in the configuration. Future versions of the app will also come bundled with a pre-made profile for Greenlight.
+A custom profile may be created targeting the [Greenlight](https://github.com/unknownskl/greenlight) app, utilizing its ability to launch a game through an argument. To forward the argument to Greenlight, include `{xCloudId}` in the configuration. Future versions of the app will also come bundled with a pre-made profile for Greenlight.
 
 Alternatively, you can create your own config profile for your preferred environment and add it to **config.json**
 
