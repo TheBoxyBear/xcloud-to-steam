@@ -19,6 +19,8 @@
 
 > [!IMPORTANT]
 > The project is configured to compile to a native app. This process requires the compilation be done on the same OS family and CPU architecture as the target device that will be running the app.
+>
+> If you are having trouble building the app on the target device, you may build it on another OS installation, including a virtual machine or WSL on Windows to build for Linux.
 
 ## Setup
 
