@@ -22,7 +22,9 @@ Use this reference to create game shortcuts in your Steam library. Use the *Stor
 
 foreach (ProductDetails details in games.OrderBy(details => details.ProductTitle))
 {
-	string title = details.ProductTitle.Replace("©", "").Replace("®", "").Replace("™", "");
+	string title = details.ProductTitle
+		.Replace("©", "").Replace("®", "").Replace("™", "")
+		.Replace("|", @"\|");
 	sb.AppendLine($"| [{title}](https://xbox.com/play/games/{details.StoreId}) | {details.PublisherName} | {details.StoreId} | {details.XCloudTitleId} |");
 }
 
