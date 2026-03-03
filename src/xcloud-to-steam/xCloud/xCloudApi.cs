@@ -17,7 +17,7 @@ public static class xCloudApi
 
 	public static async IAsyncEnumerable<string> GetCatalog(CancellationToken cancellationToken = default)
 	{
-		Task<string[]> missingGamesTask = File.ReadAllLinesAsync("api/added-games.txt", cancellationToken);
+		Task<string[]> missingGamesTask = File.ReadAllLinesAsync("api/missing-games.txt", cancellationToken);
 
 		RestRequest request = new("sigls/v3", Method.Get);
 
