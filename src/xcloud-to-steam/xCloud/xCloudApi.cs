@@ -17,6 +17,8 @@ public static class xCloudApi
 
 	public static async IAsyncEnumerable<string> GetCatalog(CancellationToken cancellationToken = default)
 	{
+		Task<string[]> missingGamesTask = File.ReadAllLinesAsync("api/added-games.txt", cancellationToken);
+
 		RestRequest request = new("sigls/v3", Method.Get);
 
 		request
@@ -40,20 +42,20 @@ public static class xCloudApi
 
 		using MemoryStream stream = new(Encoding.UTF8.GetBytes(response.Content));
 
-		// Goldeneye, Rare Replay
-		List<string> missingIds = ["9N6639H7VGH4", "BWXKD3FFMNP3"];
+		List<string> missingGames = [.. (await missingGamesTask)
+			.Where(static line => line.Length > 0 && !line.StartsWith("//"))];
 
 		await foreach (GameIdDto dto in JsonSerializer.DeserializeAsyncEnumerable(stream, xCloudJsonContext.Default.GameIdDto, cancellationToken).Skip(1))
 		{
-			int missingIdIndex = missingIds.IndexOf(dto.Id);
+			int missingIdIndex = missingGames.IndexOf(dto.Id);
 
 			if (missingIdIndex != -1)
-				missingIds.RemoveAt(missingIdIndex);
+				missingGames.RemoveAt(missingIdIndex);
 
 			yield return dto.Id;
 		}
 
-		foreach (string missingId in missingIds)
+		foreach (string missingId in missingGames)
 			yield return missingId;
 	}
 

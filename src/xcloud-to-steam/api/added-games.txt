@@ -1,0 +1,8 @@
+﻿// The Xbox API was found to occasionally exclude specific games when requestign the full list
+// You can add the store ids of such games here to have them included in the fecth
+
+// Goldeneye 007
+9N6639H7VGH4
+
+// Rare Replay
+BWXKD3FFMNP3
