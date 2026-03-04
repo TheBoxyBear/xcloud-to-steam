@@ -27,11 +27,10 @@
 > [!WARNING]
 > As the app is still in development, it is highly recommendes you make a backup of your current Steam shortcuts file. It can be found under *[Steam]/userdata/[Account ID]/config/shortcuts.vdf*
 
-
 ### Windows
 The app is ready to use out of the box. The default configuration will launch the official web app on the Edge browser in full screen kiosk mode.
 
-## Linux
+### Linux
 The default profile relies on the `browser` and `kiosk` shell scripts found in [this repository](https://github.com/theboxybear/deck-xcloud-scripts). Follow the setup guide, while making sure to place the scripts in your Home directory. This configuration has been primarily tested on StemOS and may not work on other distributions.
 
 ### Greenlight app
@@ -39,7 +38,7 @@ A custom profile may be created targeting the [Greenlight](https://github.com/un
 
 Alternatively, you can create your own config profile for your preferred environment and add it to **config.json**
 
-## MacOS
+### MacOS
 The app doesn't currently include a default config profile for macOS. You must create your own and add it to **config.json**
 
 ## Per-game configurations
