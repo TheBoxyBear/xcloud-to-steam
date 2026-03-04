@@ -25,7 +25,7 @@
 ## Setup
 
 > [!WARNING]
-> As the app is still in development, it is highly recommendes you make a backup of your current Steam shortcuts file. It can be found under *[Steam]/userdata/[Account ID]/config/shortcuts.vdf*
+> As the app is still in development, it is highly recommended you make a backup of your current Steam shortcuts file. It can be found under *[Steam]/userdata/[Account ID]/config/shortcuts.vdf*
 
 ### Windows
 The app is ready to use out of the box. The default configuration will launch the official web app on the Edge browser in full screen kiosk mode.
