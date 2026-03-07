@@ -41,6 +41,10 @@ Alternatively, you can create your own config profile for your preferred environ
 ### MacOS
 The app doesn't currently include a default config profile for macOS. You must create your own and add it to **config.json**
 
+> [!CRITICAL]
+> MacOS support is only theoretical. As the creator lacks access to a Mac to build and test on, no Mac build is provided and no functionality can be guaranteed at this time. The app does however include MacOS specific code to identify the Steam installation and user home directory.
+
+
 ## Per-game configurations
 The app currently doesn't support using different configuration profiles on a per-game basis. Selecting Apply will overwrite all existing and new shortcuts with the currently selected profile. You may however create a profile that routes shortcuts to a custom program/script to launch the shortcut differently based on the game.
 
