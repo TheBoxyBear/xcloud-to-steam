@@ -49,3 +49,6 @@ The app currently doesn't support using different configuration profiles on a pe
 - General instability when running on a weak Internet connection or during an Xbox service outage
 - Crash when **config.json** is missing or cannot find a config profile for the host OS
 - App fails to identify the device's country on SteamOS
+
+## Legal notice
+This project is not not affiliated with Microsoft or Xbox. This app does **NOT** enable piracy, nor does the creator condone piracy. Users must ensure they have access to games they launch through either a purchase or subscription. The app uses Xbox's established cloud web client and therefore does not bypass any DRM checks. The app is provided as-is without wanrranty. Users may not be eligible to refunds in association with the game not functioning using this app and provided or custom setups. The user is fully responsible to ensure this experience is suited for them or have access to an alternate means of running games before commiting to any purchase.
