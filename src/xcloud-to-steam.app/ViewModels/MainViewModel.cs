@@ -278,11 +278,22 @@ public partial class MainViewModel : ViewModelBase
 				catch (Exception ex) { Program.HandleException(ex); }
 			});
 
+		ImageType[] imageTypes = Enum.GetValues<ImageType>();
+
 		foreach (ProductSelection toRemove in toRemoveList)
 			if (m_shortcutDict.TryGetValue(toRemove.Details.StoreId, out SteamShortcut? shortcut))
 			{
 				m_shortcuts.Remove(shortcut);
 				m_shortcutDict.Remove(toRemove.Details.StoreId);
+
+				foreach (ImageType imageType in imageTypes)
+				{
+					string path = SteamManager.GetGridImagePath(m_session, shortcut.AppId, imageType);
+
+					if (File.Exists(path))
+						try { File.Delete(path); }
+						catch (Exception ex) { Program.HandleException(ex); }
+				}
 
 				OnTaskComplete();
 			}
