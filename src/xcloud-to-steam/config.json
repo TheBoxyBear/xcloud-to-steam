@@ -5,6 +5,12 @@
         "AppName": "{title} (xCloud)",
         "Exe": "\"C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe\"",
         "WorkingDir": "C:/Program Files (x86)/Microsoft/Edge/Application",
+        "Args": "--kiosk xbox.com/play/{storeId}"
+      },
+      "Edge (Cloud Preview)": {
+        "AppName": "{title} (xCloud)",
+        "Exe": "\"C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe\"",
+        "WorkingDir": "C:/Program Files (x86)/Microsoft/Edge/Application",
         "Args": "--kiosk play.xbox.com/stream/{storeId}"
       }
     },
@@ -16,7 +22,7 @@
         "WorkingDir": "{home}/",
         "Args": "xbox.com/play/{storeId}"
       },
-      "Edge (Preview)": {
+      "Edge (Cloud Preview)": {
         "AppName": "{title} (xCloud)",
         "Exe": "\"{home}/kiosk.sh\"",
         "WorkingDir": "{home}/",
