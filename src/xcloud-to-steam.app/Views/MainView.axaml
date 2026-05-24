@@ -85,15 +85,33 @@
 		</ListBox.ItemTemplate>
 	</ListBox>
 
-		<Button
-			Grid.Row="2" IsEnabled="{Binding !Locked}"
-			HorizontalAlignment="Center" VerticalAlignment="Center"
-			Command="{Binding Apply}" CommandParameter="{Binding}"
-			Width="200" Height="100" Margin="10" Padding="10">
-		<StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
-			<TextBlock Text="Apply" FontSize="16" FontWeight="Bold" TextAlignment="Center"/>
-			<TextBlock Text="{Binding ApplyStatus}" FontSize="12" TextAlignment="Center" Margin="0,5,0,5"/>
-			</StackPanel>
-		</Button>
+		<Grid Grid.Row="2">
+			<Grid.ColumnDefinitions>
+				<ColumnDefinition Width="1*"/>
+				<ColumnDefinition Width="1*"/>
+
+			</Grid.ColumnDefinitions>
+			<Button
+				Grid.Column="0" IsEnabled="{Binding !Locked}"
+				HorizontalAlignment="Center" VerticalAlignment="Center"
+				Command="{Binding Apply}" CommandParameter="false"
+				Width="200" Height="100" Margin="10" Padding="10">
+			<StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+				<TextBlock Text="Quick Apply" FontSize="16" FontWeight="Bold" TextAlignment="Center"/>
+				<TextBlock Text="{Binding ApplyStatus}" FontSize="12" TextAlignment="Center" Margin="0,5,0,5"/>
+				</StackPanel>
+			</Button>
+
+			<Button
+				Grid.Column="1" IsEnabled="{Binding !Locked}"
+				HorizontalAlignment="Center" VerticalAlignment="Center"
+				Command="{Binding Apply}" CommandParameter="true"
+				Width="200" Height="100" Margin="10" Padding="10">
+			<StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+				<TextBlock Text="Re-apply with config" FontSize="16" FontWeight="Bold" TextAlignment="Center"/>
+				<TextBlock Text="{Binding ApplyStatus}" FontSize="12" TextAlignment="Center" Margin="0,5,0,5"/>
+				</StackPanel>
+			</Button>
+		</Grid>
 	</Grid>
 </Window>

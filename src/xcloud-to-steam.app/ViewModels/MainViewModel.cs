@@ -1,5 +1,4 @@
-﻿using Avalonia.Styling;
-using Avalonia.Threading;
+﻿using Avalonia.Threading;
 
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -225,7 +224,7 @@ public partial class MainViewModel : ViewModelBase
 	}
 
 	[RelayCommand]
-	public async Task Apply()
+	public async Task Apply(bool reapplyWithConfig)
 	{
 		Locked = true;
 		ApplyStatus = "Applying...";
@@ -237,7 +236,10 @@ public partial class MainViewModel : ViewModelBase
 
 		uint
 			completedTasks = 0,
-			totalTasks     = (uint)(toAddList.Count + toModifyList.Count + toRemoveList.Count);
+			totalTasks     = (uint)(toAddList.Count + toRemoveList.Count);
+
+		if (reapplyWithConfig)
+			totalTasks += (uint)toModifyList.Count;
 
 		ParallelOptions parallelOptions = new() { MaxDegreeOfParallelism = 4 };
 
@@ -247,7 +249,7 @@ public partial class MainViewModel : ViewModelBase
 				try
 				{
 					SteamShortcut shortcut = await xCloudShortcutManager.CreateShortcut(
-							m_session, selection.Details, SelectedConfigProfile.Value, ct);
+						m_session, selection.Details, SelectedConfigProfile.Value, ct);
 
 					lock (m_shortcuts)
 						m_shortcuts.Add(shortcut);
@@ -260,7 +262,10 @@ public partial class MainViewModel : ViewModelBase
 				catch (Exception ex) { Program.HandleException(ex); }
 			});
 
-		Task modifyTask = Parallel.ForEachAsync(toModifyList, parallelOptions,
+		Task? modifyTask = null;
+
+		if (reapplyWithConfig)
+			modifyTask = Parallel.ForEachAsync(toModifyList, parallelOptions,
 			async (selection, ct) =>
 			{
 				try
@@ -282,7 +287,10 @@ public partial class MainViewModel : ViewModelBase
 				OnTaskComplete();
 			}
 
-		await Task.WhenAll(addTask, modifyTask);
+		await addTask;
+
+		if (reapplyWithConfig)
+			await modifyTask!;
 
 		foreach (ProductSelection selection in toAddList)
 			UpdateSelectionState(selection, ProductSelectionState.Added);
