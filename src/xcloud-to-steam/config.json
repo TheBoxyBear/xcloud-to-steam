@@ -10,7 +10,13 @@
     },
     "MacOS": {},
     "Linux": {
-      "Edge scripts": {
+      "Edge": {
+        "AppName": "{title} (xCloud)",
+        "Exe": "\"{home}/kiosk.sh\"",
+        "WorkingDir": "{home}/",
+        "Args": "xbox.com/play/{storeId}"
+      },
+      "Edge (Preview)": {
         "AppName": "{title} (xCloud)",
         "Exe": "\"{home}/kiosk.sh\"",
         "WorkingDir": "{home}/",
