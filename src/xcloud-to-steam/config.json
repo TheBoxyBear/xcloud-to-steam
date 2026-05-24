@@ -14,7 +14,20 @@
         "Args": "--kiosk play.xbox.com/stream/{storeId}"
       }
     },
-    "MacOS": {},
+    "MacOS": {
+      "Safari": {
+        "AppName": "{title} (xCloud)",
+        "Exe": "open",
+        "WorkingDir": ".",
+        "Args": "-a Safari xbox.com/play/{storeId}"
+      },
+      "Safari (Preview)": {
+        "AppName": "{title} (xCloud)",
+        "Exe": "open",
+        "WorkingDir": ".",
+        "Args": "-a Safari play.xbox.com/stream/{storeId}"
+      }
+    },
     "Linux": {
       "Edge": {
         "AppName": "{title} (xCloud)",
