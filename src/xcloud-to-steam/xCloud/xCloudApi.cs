@@ -43,7 +43,7 @@ public static class xCloudApi
 		using MemoryStream stream = new(Encoding.UTF8.GetBytes(response.Content));
 
 		List<string> missingGames = [.. (await missingGamesTask)
-			.Where(static line => line.Length > 0 && !line.StartsWith("//"))];
+			.Where(static line => line.Length > 0 && !line.StartsWith('#'))];
 
 		await foreach (GameIdDto dto in JsonSerializer.DeserializeAsyncEnumerable(stream, xCloudJsonContext.Default.GameIdDto, cancellationToken).Skip(1))
 		{
